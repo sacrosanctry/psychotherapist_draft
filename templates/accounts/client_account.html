@@ -1,0 +1,158 @@
+{% extends "base.html" %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}{% trans "My Account" %}{% endblock %}
+
+{% block content %}
+<!-- <style>
+.card-content {
+    height: 100%;
+}
+.card-content-with-header {
+    height: calc(100% - 38px);
+}
+</style> -->
+
+<!-- Debug info -->
+<!-- <div class="container mt-3">
+    <div class="alert alert-info">
+        <p>Survey done: {{ user.survey_done }}</p>
+        <p>Matched therapists count: {{ matched_therapists|length }}</p>
+        {% if matched_therapists %}
+            <p>Therapist IDs: 
+                {% for therapist in matched_therapists %}
+                    {{ therapist.user.id }}{% if not forloop.last %}, {% endif %}
+                {% endfor %}
+            </p>
+        {% endif %}
+    </div>
+</div> -->
+
+<div class="container py-5">
+    <div class="row">
+        <!-- Sidebar -->
+        <div class="col-md-3">
+            <div class="card shadow-sm mb-4">
+                <div class="card-body">
+                    <div class="text-center mb-4">
+                        <div class="avatar-placeholder bg-primary text-white rounded-circle mx-auto mb-3" style="width: 100px; height: 100px; line-height: 100px; font-size: 2.5rem;">
+                            {{ user.first_name|first }}{{ user.last_name|first }}
+                        </div>
+                        <h5 class="card-title mb-1">{{ user.get_full_name }}</h5>
+                        <p class="text-muted small">{{ user.email }}</p>
+                    </div>
+                    <div class="list-group list-group-flush">
+                        <a href="#" class="list-group-item list-group-item-action active">
+                            <i class="fas fa-user me-2"></i>{% trans "Profile" %}
+                        </a>
+                        {% if user.survey_done %}
+                        <a href="#matches" class="list-group-item list-group-item-action">
+                            <i class="fas fa-heart me-2"></i>{% trans "My Matches" %}
+                            <span class="badge bg-primary rounded-pill float-end">{{ matched_therapists|length }}</span>
+                        </a>
+                        {% else %}
+                        <a href="{% url 'matching:client_matching_form' %}" class="list-group-item list-group-item-action">
+                            <i class="fas fa-search me-2"></i>{% trans "Find Your Match" %}
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="col-md-9">
+            <!-- Profile Information -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="card-title mb-0">{% trans "Personal Information" %}</h5>
+                        <a href="{% url 'users:edit_client_profile' %}" class="btn btn-outline-primary">
+                            <i class="fas fa-edit me-2"></i>{% trans "Edit Profile" %}
+                        </a>
+                    </div>
+                    <hr>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>{% trans "Name" %}:</strong> {{ user.get_full_name }}</p>
+                            <p><strong>{% trans "Email" %}:</strong> {{ user.email }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>{% trans "Phone" %}:</strong> {{ user.phone_number|default:"Not provided" }}</p>
+                            <p><strong>{% trans "Member since" %}:</strong> {{ user.date_joined|date:"F j, Y" }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Matches Section -->
+            {% if user.survey_done %}
+            <div id="matches" class="card shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="card-title mb-0">{% trans "Your Therapist Matches" %}</h5>
+                        <a href="{% url 'matching:client_matching_form' %}" class="btn btn-outline-primary">
+                            <i class="fas fa-sync-alt me-2"></i>{% trans "Update Preferences" %}
+                        </a>
+                    </div>
+                    <hr>
+                    <p class="card-text">
+                        {% trans "Based on your preferences, we've found therapists who align with your needs. Review your matches below." %}
+                    </p>
+                    <!-- Matched Therapists -->
+                    <div class="row">
+                        {% if matched_therapists %}
+                            {% for match in matched_therapists %}
+                            <div class="col-md-6 mb-3">
+                                <div class="card {% if match.is_best_match %}border-primary shadow-lg{% endif %}">
+                                    {% if match.is_best_match %}
+                                    <div class="card-header bg-primary text-white py-2">
+                                        <i class="fas fa-star me-2"></i>{% trans "Best Match for You!" %}
+                                    </div>
+                                    {% endif %}
+                                    <div class="row g-0">
+                                        <div class="col-4">
+                                            <div style="width: 100%; height: 0; padding-bottom: 133.33%; position: relative;">
+                                                {% if match.therapist.image %}
+                                                    <img src="{{ match.therapist.image.url }}" class="rounded-start" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover;" alt="{{ match.user.get_full_name }}">
+                                                {% else %}
+                                                    <img src="{% static 'img/profile.png' %}" class="rounded-start" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover;" alt="Default profile">
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                        <div class="col-8">
+                                            <div class="card-body">
+                                                <h6 class="card-title">{{ match.user.get_full_name }}</h6>
+                                                <p class="card-text small">
+                                                    <span class="badge bg-primary">{{ match.therapist.working_methodology.name }}</span>
+                                                    <span class="badge bg-info">{{ match.therapist.experience }} {% if match.therapist.experience == 1 %}{% trans "year" %}{% else %}{% trans "years" %}{% endif %}</span>
+                                                    <span class="badge bg-success">{% trans "Match Score" %}: {{ match.score|floatformat:2 }}</span>
+                                                </p>
+                                                <p class="card-text small text-muted mb-2">{{ match.therapist.about|truncatewords:15 }}</p>
+                                                <div class="d-flex justify-content-between align-items-center">
+                                                    <span class="text-primary">${{ match.therapist.price }} {% trans "per session" %}</span>
+                                                    <a href="{% url 'psychotherapists:therapist_detail' match.therapist.id %}" class="btn btn-sm btn-outline-primary">{% trans "View Profile" %}</a>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        {% else %}
+                            <div class="col-12">
+                                <div class="alert alert-info">
+                                    <i class="fas fa-info-circle me-2"></i>
+                                    {% trans "No matches found. Try updating your preferences." %}
+                                </div>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %} 

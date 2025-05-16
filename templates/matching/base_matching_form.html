@@ -1,0 +1,153 @@
+{% extends "base.html" %}
+{% load static %}
+{% load matching_filters %}
+
+{% block extra_css %}
+<style>
+    .rating-form {
+        max-width: 800px;
+        margin: 2rem auto;
+        padding: 2rem;
+        background: #fff;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .intro-text {
+        margin-bottom: 2rem;
+        padding: 1rem;
+        background: #f8f9fa;
+        border-radius: 4px;
+        white-space: pre-line;
+    }
+
+    .criterion-group {
+        margin-bottom: 2rem;
+        padding: 1rem;
+        border: 1px solid #dee2e6;
+        border-radius: 4px;
+    }
+
+    .criterion-name {
+        font-weight: bold;
+        margin-bottom: 0.5rem;
+    }
+
+    .criterion-description {
+        color: #6c757d;
+        margin-bottom: 1rem;
+        white-space: pre-line;
+    }
+
+    .rating-radio {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: nowrap;
+        justify-content: space-between;
+        margin: 1rem 0;
+    }
+
+    .rating-radio label {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 40px;
+        height: 40px;
+        border: 1px solid #dee2e6;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .rating-radio input[type="radio"] {
+        display: none;
+    }
+
+    .rating-radio label:hover {
+        background: #f8f9fa;
+        transform: translateY(-2px);
+    }
+
+    .rating-radio input[type="radio"]:checked + label {
+        background: #007bff;
+        color: white;
+        border-color: #007bff;
+    }
+
+    .score-description {
+        font-size: 0.9rem;
+        color: #6c757d;
+        margin-top: 0.5rem;
+    }
+
+    .score-description.left {
+        text-align: left;
+    }
+
+    .score-description.right {
+        text-align: right;
+    }
+
+    .submit-button {
+        margin-top: 2rem;
+        padding: 0.75rem 2rem;
+        background: #007bff;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+
+    .submit-button:hover {
+        background: #0056b3;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="rating-form">
+    <h1>{% block form_title %}{% endblock %}</h1>
+    
+    <div class="intro-text">
+        {{ intro_text }}
+    </div>
+
+    <form method="post">
+        {% csrf_token %}
+        
+        {% for field in form %}
+            <div class="criterion-group">
+                <div class="criterion-name">{{ field.label }}</div>
+                <div class="criterion-description">{{ field.help_text|linebreaksbr }}</div>
+                <div class="rating-radio">
+                    {% for value, text in field.field.choices %}
+                        <input type="radio" name="{{ field.name }}" value="{{ value }}" id="{{ field.name }}_{{ value }}" {% if field.value == value %}checked{% endif %}>
+                        <label for="{{ field.name }}_{{ value }}">{{ text }}</label>
+                    {% endfor %}
+                </div>
+                <div class="row">
+                    <div class="col-6">
+                        <div class="score-description left">
+                            <strong>1:</strong> {{ criteria|get_item:forloop.counter0|get_attr:"score_meaning_1" }}
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="score-description right">
+                            <strong>9:</strong> {{ criteria|get_item:forloop.counter0|get_attr:"score_meaning_9" }}
+                        </div>
+                    </div>
+                </div>
+                {% if field.errors %}
+                    <div class="error-message">
+                        {{ field.errors }}
+                    </div>
+                {% endif %}
+            </div>
+        {% endfor %}
+
+        <button type="submit" class="submit-button">
+            {% block submit_button_text %}Save Ratings{% endblock %}
+        </button>
+    </form>
+</div>
+{% endblock %} 

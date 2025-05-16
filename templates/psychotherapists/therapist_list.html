@@ -1,0 +1,164 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% load static %}
+
+{% block extra_css %}
+<style>
+    .therapist-card {
+        transition: transform 0.2s;
+        margin-bottom: 1.5rem;
+        border-radius: 15px;
+        overflow: hidden;
+    }
+    .therapist-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+    .therapist-image-container {
+        width: 100%;
+        height: 0;
+        padding-bottom: 133.33%;
+        position: relative;
+    }
+    .therapist-image {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        border-radius: 12px;
+    }
+    .price-tag {
+        background: #e8f5e9;
+        color: #2e7d32;
+        padding: 0.25rem 0.75rem;
+        border-radius: 15px;
+        font-size: 0.9rem;
+        font-weight: bold;
+    }
+    .methodology-badge {
+        background: #e3f2fd;
+        color: #1565c0;
+        padding: 0.25rem 0.75rem;
+        border-radius: 15px;
+        font-size: 0.9rem;
+    }
+    .experience-badge {
+        background: #ffebee;
+        color: #c62828;
+        padding: 0.25rem 0.75rem;
+        border-radius: 15px;
+        font-size: 0.9rem;
+    }
+    .card-body {
+        padding: 1rem;
+    }
+    .card-title {
+        margin-bottom: 0.5rem;
+    }
+    .card-text {
+        margin-bottom: 0.5rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Search and Filter Section -->
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <form method="get" class="d-flex gap-2">
+                <input type="text" name="q" class="form-control" placeholder="{% trans 'Search by name or methodology...' %}" value="{{ request.GET.q }}">
+                <select name="methodology" class="form-select" style="max-width: 200px;">
+                    <option value="">{% trans "All Methodologies" %}</option>
+                    {% for methodology in methodologies %}
+                        <option value="{{ methodology }}" {% if request.GET.methodology == methodology %}selected{% endif %}>
+                            {{ methodology }}
+                        </option>
+                    {% endfor %}
+                </select>
+                <select name="experience" class="form-select" style="max-width: 150px;">
+                    <option value="">{% trans "Any Experience" %}</option>
+                    <option value="5" {% if request.GET.experience == '5' %}selected{% endif %}>5+ {% trans "years" %}</option>
+                    <option value="10" {% if request.GET.experience == '10' %}selected{% endif %}>10+ {% trans "years" %}</option>
+                    <option value="15" {% if request.GET.experience == '15' %}selected{% endif %}>15+ {% trans "years" %}</option>
+                </select>
+                <button type="submit" class="btn btn-primary">{% trans "Search" %}</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Therapists List -->
+    <div class="row">
+        {% for therapist in therapists %}
+        <div class="col-12">
+            <div class="card therapist-card">
+                <div class="row g-0">
+                    <div class="col-md-2 p-2">
+                        <div class="therapist-image-container">
+                            {% if therapist.image %}
+                                <img src="{{ therapist.image.url }}" class="therapist-image" alt="{{ therapist.user.get_full_name }}">
+                            {% else %}
+                                <img src="{% static 'img/profile.png' %}" class="therapist-image" alt="Default profile">
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="col-md-10">
+                        <div class="card-body">
+                            <h5 class="card-title">{{ therapist.user.get_full_name }}</h5>
+                            <div class="d-flex gap-2 mb-2">
+                                <span class="methodology-badge">{{ therapist.working_methodology.name }}</span>
+                                <span class="experience-badge">{% trans "Experience" %}: {{ therapist.experience }} {% if therapist.experience == 1 %}{% trans "year" %}{% else %}{% trans "years" %}{% endif %}</span>
+                            </div>
+                            <p class="card-text">{{ therapist.about|truncatewords:30 }}</p>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="price-tag">${{ therapist.price }} {% trans "per session" %}</span>
+                                <a href="{% url 'psychotherapists:therapist_detail' therapist.id %}" class="btn btn-outline-primary">{% trans "View Profile" %}</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12">
+            <div class="alert alert-info">
+                {% trans "No therapists found matching your criteria." %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Pagination -->
+    {% if is_paginated %}
+    <nav class="mt-4">
+        <ul class="pagination justify-content-center">
+            {% if page_obj.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page=1{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.methodology %}&methodology={{ request.GET.methodology }}{% endif %}{% if request.GET.experience %}&experience={{ request.GET.experience }}{% endif %}">{% trans "First" %}</a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.methodology %}&methodology={{ request.GET.methodology }}{% endif %}{% if request.GET.experience %}&experience={{ request.GET.experience }}{% endif %}">{% trans "Previous" %}</a>
+                </li>
+            {% endif %}
+
+            <li class="page-item active">
+                <span class="page-link">
+                    {% trans "Page" %} {{ page_obj.number }} {% trans "of" %} {{ page_obj.paginator.num_pages }}
+                </span>
+            </li>
+
+            {% if page_obj.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.methodology %}&methodology={{ request.GET.methodology }}{% endif %}{% if request.GET.experience %}&experience={{ request.GET.experience }}{% endif %}">{% trans "Next" %}</a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.methodology %}&methodology={{ request.GET.methodology }}{% endif %}{% if request.GET.experience %}&experience={{ request.GET.experience }}{% endif %}">{% trans "Last" %}</a>
+                </li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+</div>
+{% endblock %} 

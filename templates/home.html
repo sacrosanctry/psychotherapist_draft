@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}{% trans "Welcome" %}{% endblock %}
+
+{% block content %}
+<!-- Welcome Section -->
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8 text-center">
+            <h1 class="display-4 mb-4">{% trans "Welcome to Our Therapy Platform" %}</h1>
+            <p class="lead text-muted">
+                {% trans "Find the right therapist for your journey to mental well-being." %}
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %} 

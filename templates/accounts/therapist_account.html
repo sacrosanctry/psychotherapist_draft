@@ -1,0 +1,332 @@
+{% extends 'base.html' %}
+{% load i18n %}
+{% load static %}
+
+{% block content %}
+<div class="container mt-4">
+    {% if messages %}
+        <div class="messages mb-4">
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    {% if is_profile_completion %}
+        {# Profile Completion Form #}
+        <div class="card">
+            <div class="card-header">
+                <h2>{% if therapist %}{% trans "Complete Your Profile" %}{% else %}{% trans "Create Your Profile" %}{% endif %}</h2>
+            </div>
+            <div class="card-body">
+                <form method="post" enctype="multipart/form-data" novalidate>
+                    {% csrf_token %}
+                    
+                    {% if form.non_field_errors %}
+                        <div class="alert alert-danger">
+                            {% for error in form.non_field_errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                    
+                    <h4>{% trans "Basic Information" %}</h4>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="id_first_name" class="form-label">{% trans "First Name" %}</label>
+                            {{ user_form.first_name }}
+                            {% if user_form.first_name.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ user_form.first_name.errors }}
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6">
+                            <label for="id_last_name" class="form-label">{% trans "Last Name" %}</label>
+                            {{ user_form.last_name }}
+                            {% if user_form.last_name.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ user_form.last_name.errors }}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="id_phone_number" class="form-label">{% trans "Phone Number" %}</label>
+                        {{ user_form.phone_number }}
+                        {% if user_form.phone_number.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ user_form.phone_number.errors }}
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <h4>{% trans "Professional Information" %}</h4>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="birth_date" class="form-label">{% trans "Birth Date" %}</label>
+                            <input type="date" class="form-control {% if form.birth_date.errors %}is-invalid{% endif %}" 
+                                   id="birth_date" name="birth_date" value="{{ therapist.birth_date|date:'Y-m-d' }}" required>
+                            {% if form.birth_date.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.birth_date.errors }}
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6">
+                            <label for="gender" class="form-label">{% trans "Gender" %}</label>
+                            <select class="form-control {% if form.gender.errors %}is-invalid{% endif %}" 
+                                    id="gender" name="gender" required>
+                                <option value="">{% trans "Select gender" %}</option>
+                                <option value="M" {% if therapist.gender == 'M' %}selected{% endif %}>{% trans "Male" %}</option>
+                                <option value="F" {% if therapist.gender == 'F' %}selected{% endif %}>{% trans "Female" %}</option>
+                            </select>
+                            {% if form.gender.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.gender.errors }}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="about" class="form-label">{% trans "About Me" %}</label>
+                        <textarea class="form-control {% if form.about.errors %}is-invalid{% endif %}" 
+                                  id="about" name="about" rows="4" required>{{ therapist.about }}</textarea>
+                        {% if form.about.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.about.errors }}
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="working_methodology" class="form-label">{% trans "Working Methodology" %}</label>
+                            <select class="form-control {% if form.working_methodology.errors %}is-invalid{% endif %}" 
+                                    id="working_methodology" name="working_methodology" required>
+                                <option value="">{% trans "Select methodology" %}</option>
+                                {% for methodology in methodologies %}
+                                    <option value="{{ methodology.id }}" 
+                                        {% if therapist.working_methodology_id == methodology.id %}selected{% endif %}>
+                                        {{ methodology.name }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                            {% if form.working_methodology.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.working_methodology.errors }}
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6">
+                            <label for="experience" class="form-label">{% trans "Years of Experience" %}</label>
+                            <input type="number" class="form-control {% if form.experience.errors %}is-invalid{% endif %}" 
+                                   id="experience" name="experience" min="0" 
+                                   value="{% if form.experience.value %}{{ form.experience.value }}{% elif therapist.experience %}{{ therapist.experience }}{% endif %}" required>
+                            {% if form.experience.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.experience.errors }}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="education_institution" class="form-label">{% trans "Educational Institution" %}</label>
+                            <input type="text" class="form-control {% if form.education_institution.errors %}is-invalid{% endif %}" 
+                                   id="education_institution" name="education_institution" 
+                                   value="{% if form.education_institution.value %}{{ form.education_institution.value }}{% elif therapist.education_institution %}{{ therapist.education_institution }}{% endif %}" required>
+                            {% if form.education_institution.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.education_institution.errors }}
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-3">
+                            <label for="education_start_year" class="form-label">{% trans "Start Year" %}</label>
+                            <input type="number" class="form-control {% if form.education_start_year.errors %}is-invalid{% endif %}" 
+                                   id="education_start_year" name="education_start_year" 
+                                   min="1940" max="{{ current_year }}" 
+                                   value="{% if form.education_start_year.value %}{{ form.education_start_year.value }}{% elif therapist.education_start_year %}{{ therapist.education_start_year }}{% endif %}" required>
+                            {% if form.education_start_year.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.education_start_year.errors }}
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-3">
+                            <label for="education_end_year" class="form-label">{% trans "End Year" %}</label>
+                            <input type="number" class="form-control {% if form.education_end_year.errors %}is-invalid{% endif %}" 
+                                   id="education_end_year" name="education_end_year" 
+                                   min="1940" max="{{ current_year }}" 
+                                   value="{% if form.education_end_year.value %}{{ form.education_end_year.value }}{% elif therapist.education_end_year %}{{ therapist.education_end_year }}{% endif %}">
+                            {% if form.education_end_year.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.education_end_year.errors }}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="price" class="form-label">{% trans "Session Price (€)" %}</label>
+                            <input type="number" class="form-control {% if form.price.errors %}is-invalid{% endif %}" 
+                                   id="price" name="price" min="1" 
+                                   value="{% if form.price.value %}{{ form.price.value }}{% elif therapist.price %}{{ therapist.price }}{% endif %}" required>
+                            {% if form.price.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.price.errors }}
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6">
+                            <label for="image" class="form-label">{% trans "Profile Photo" %}</label>
+                            <input type="file" class="form-control {% if form.image.errors %}is-invalid{% endif %}" 
+                                   id="image" name="image" accept="image/jpeg,image/png" 
+                                   aria-describedby="imageHelp">
+                            <div id="imageHelp" class="form-text">{% trans "Only JPEG and PNG images are allowed. Maximum file size: 5MB." %}</div>
+                            {% if form.image.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.image.errors }}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary">{% trans "Complete Profile" %}</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    {% else %}
+        {# Account View #}
+        <div class="row">
+            <!-- Main Profile Card -->
+            <div class="col-md-8">
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h2>{% trans "My Profile" %}</h2>
+                        <a href="{% url 'users:edit_therapist_profile' %}" class="btn btn-outline-primary">{% trans "Edit Profile" %}</a>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-4">
+                            <!-- Profile Photo -->
+                            <div class="col-md-4">
+                                <div class="profile-photo-container mb-3">
+                                    <img src="{{ therapist.image.url }}" 
+                                         alt="{{ therapist.user.get_full_name }}" 
+                                         class="profile-photo img-fluid rounded"
+                                         onerror="handleImageError(this);">
+                                </div>
+                            </div>
+                            
+                            <!-- Profile Information -->
+                            <div class="col-md-8">
+                                <div class="profile-info">
+                                    <h3 class="mb-2">{{ therapist.user.get_full_name }}</h3>
+                                    {% if therapist.working_methodology %}
+                                        <p class="text-muted mb-3">{{ therapist.working_methodology.name }}</p>
+                                    {% endif %}
+                                    
+                                    <div class="mb-4">
+                                        <h5>{% trans "About Me" %}</h5>
+                                        <p class="mb-0">{{ therapist.about }}</p>
+                                    </div>
+                                    
+                                    <div class="row g-3">
+                                        <div class="col-md-6">
+                                            <h5>{% trans "Education" %}</h5>
+                                            <p class="mb-0">{{ therapist.get_education_display }}</p>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <h5>{% trans "Experience" %}</h5>
+                                            <p class="mb-0">{{ therapist.experience }} {% trans "years" %}</p>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="row g-3 mt-2">
+                                        <div class="col-md-6">
+                                            <h5>{% trans "Session Price" %}</h5>
+                                            <p class="mb-0">€{{ therapist.price }}</p>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <h5>{% trans "Contact" %}</h5>
+                                            <p class="mb-0">{{ therapist.user.phone_number }}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Matching Section -->
+            <div class="col-md-4">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        {% if not user.survey_done %}
+                            <h5 class="card-title">{% trans "Help Clients Find You" %}</h5>
+                            <p class="card-text">
+                                {% trans "Share your therapeutic approach and style to help potential clients find the right match. Your responses will help us connect you with clients who align with your expertise and approach." %}
+                            </p>
+                            <a href="{% url 'matching:therapist_matching_form' %}" class="btn btn-primary w-100">
+                                <i class="fas fa-clipboard-list me-2"></i>{% trans "Share My Approach" %}
+                            </a>
+                        {% else %}
+                            <h5 class="card-title">{% trans "Your Therapeutic Profile" %}</h5>
+                            <p class="card-text">
+                                {% trans "Your therapeutic approach is helping clients find you. Keep your profile updated to ensure the best matches." %}
+                            </p>
+                            <a href="{% url 'matching:therapist_matching_form' %}" class="btn btn-outline-primary w-100">
+                                <i class="fas fa-sync-alt me-2"></i>{% trans "Update My Profile" %}
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+</div>
+
+<style>
+.profile-photo-container {
+    width: 100%;
+    aspect-ratio: 1;
+    overflow: hidden;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.profile-photo {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+}
+
+.profile-info {
+    padding-top: 0;
+}
+
+@media (max-width: 768px) {
+    .profile-photo-container {
+        max-width: 300px;
+        margin: 0 auto;
+    }
+}
+</style>
+
+<script>
+function handleImageError(img) {
+    img.src = "{% static 'img/profile.png' %}";
+}
+</script>
+{% endblock %} 

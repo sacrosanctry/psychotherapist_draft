@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% load matching_filters %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1>{% trans "Matching Algorithm Test Results" %}</h1>
+    
+    <!-- Raw Data Section -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-header">
+            <h2>1. Raw Data</h2>
+        </div>
+        <div class="card-body">
+            <h3>Client Scores (ID: {{ client_id }})</h3>
+            <pre><code>client_scores_dict = {{ raw_data.client_scores_dict }}</code></pre>
+            
+            <h3>Therapist Scores</h3>
+            <pre><code>therapist_scores_dict = {{ raw_data.therapist_scores_dict }}</code></pre>
+        </div>
+    </div>
+
+    <!-- Matrices Section -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-header">
+            <h2>2. Pairwise Comparison Matrices</h2>
+        </div>
+        <div class="card-body">
+            <h3>Expert Matrix (1x1)</h3>
+            <pre><code>expert_matrix = 
+{{ expert_matrix }}</code></pre>
+            <p>Expert weights: {{ expert_weights }}</p>
+
+            <h3>Criteria Matrix ({{ criteria|length }}x{{ criteria|length }})</h3>
+            {% for expert_id, matrix in criteria_matrices.items %}
+            <h4>For Expert {{ expert_id }}</h4>
+            <pre><code>criteria_matrix = 
+{{ matrix }}</code></pre>
+            <p>Criteria weights: {{ criteria_weights|get_item:expert_id }}</p>
+            {% endfor %}
+
+            <h3>Alternative Matrices (one for each criterion)</h3>
+            {% for key, matrix in alternative_matrices.items %}
+            {% with expert_id=key.0 criterion_idx=key.1 %}
+            <h4>For Expert {{ expert_id }}, Criterion {{ criterion_idx|add:1 }}</h4>
+            <pre><code>alternative_matrix = 
+{{ matrix }}</code></pre>
+            <p>Alternative weights: {{ alternative_weights|get_item:criterion_idx }}</p>
+            {% endwith %}
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Results Section -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-header">
+            <h2>3. Final Results</h2>
+        </div>
+        <div class="card-body">
+            <h3>Ranked Therapists</h3>
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Rank</th>
+                        <th>Therapist ID</th>
+                        <th>Therapist Name</th>
+                        <th>Weight</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for therapist_id, weight in ranked_therapist_ids|zip_lists:ranked_weights %}
+                    <tr>
+                        <td>{{ forloop.counter }}</td>
+                        <td>{{ therapist_id }}</td>
+                        <td>{{ therapist_names|get_item:therapist_id }}</td>
+                        <td>{{ weight|floatformat:5 }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Original Tables (for reference) -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-header">
+            <h2>4. Original Data Tables</h2>
+        </div>
+        <div class="card-body">
+            <h3>Client Scores</h3>
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Criterion</th>
+                        <th>Score</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for criterion, score in criteria|zip:client_scores %}
+                    <tr>
+                        <td>{{ criterion.name }}</td>
+                        <td>{{ score }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+            <h3>Therapist Scores</h3>
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Therapist</th>
+                        {% for criterion in criteria %}
+                        <th>{{ criterion.name }}</th>
+                        {% endfor %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for therapist_id, scores in therapist_scores.items %}
+                    <tr>
+                        <td>{{ therapist_names|get_item:therapist_id }}</td>
+                        {% for score in scores %}
+                        <td>{{ score }}</td>
+                        {% endfor %}
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %} 

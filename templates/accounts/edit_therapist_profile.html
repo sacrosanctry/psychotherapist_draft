@@ -1,0 +1,172 @@
+{% extends 'base.html' %}
+{% load i18n %}
+{% load static %}
+
+{% block title %}{% trans "Edit Profile" %}{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-10">
+            <div class="card shadow-sm">
+                <div class="card-header">
+                    <h2 class="mb-0">{% trans "Edit Your Profile" %}</h2>
+                </div>
+                <div class="card-body">
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        
+                        <h4>{% trans "Basic Information" %}</h4>
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="first_name" class="form-label">{% trans "First Name" %}</label>
+                                <input type="text" class="form-control" id="first_name" name="first_name" value="{{ user.first_name }}" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="last_name" class="form-label">{% trans "Last Name" %}</label>
+                                <input type="text" class="form-control" id="last_name" name="last_name" value="{{ user.last_name }}" required>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="phone_number" class="form-label">{% trans "Phone Number" %}</label>
+                            <input type="tel" class="form-control" id="phone_number" name="phone_number" value="{{ user.phone_number }}" required>
+                        </div>
+
+                        <h4>{% trans "Professional Information" %}</h4>
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="birth_date" class="form-label">{% trans "Birth Date" %}</label>
+                                <input type="date" class="form-control" id="birth_date" name="birth_date" value="{{ therapist.birth_date|date:'Y-m-d' }}" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="gender" class="form-label">{% trans "Gender" %}</label>
+                                <select class="form-control" id="gender" name="gender" required>
+                                    <option value="">{% trans "Select gender" %}</option>
+                                    <option value="M" {% if therapist.gender == 'M' %}selected{% endif %}>{% trans "Male" %}</option>
+                                    <option value="F" {% if therapist.gender == 'F' %}selected{% endif %}>{% trans "Female" %}</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="about" class="form-label">{% trans "About Me" %}</label>
+                            <textarea class="form-control" id="about" name="about" rows="4" required>{{ therapist.about }}</textarea>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="working_methodology" class="form-label">{% trans "Working Methodology" %}</label>
+                                <select class="form-control" id="working_methodology" name="working_methodology" required>
+                                    <option value="">{% trans "Select methodology" %}</option>
+                                    {% for methodology in methodologies %}
+                                        <option value="{{ methodology.id }}" {% if therapist.working_methodology_id == methodology.id %}selected{% endif %}>{{ methodology.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="experience" class="form-label">{% trans "Years of Experience" %}</label>
+                                <input type="number" class="form-control" id="experience" name="experience" min="0" value="{{ therapist.experience }}" required>
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="education_institution" class="form-label">{% trans "Educational Institution" %}</label>
+                                <input type="text" class="form-control" id="education_institution" name="education_institution" value="{{ therapist.education_institution }}" required>
+                            </div>
+                            <div class="col-md-3">
+                                <label for="education_start_year" class="form-label">{% trans "Start Year" %}</label>
+                                <input type="number" class="form-control" id="education_start_year" name="education_start_year" min="1940" max="{{ current_year }}" value="{{ therapist.education_start_year }}" required>
+                            </div>
+                            <div class="col-md-3">
+                                <label for="education_end_year" class="form-label">{% trans "End Year" %}</label>
+                                <input type="number" class="form-control" id="education_end_year" name="education_end_year" min="1940" max="{{ current_year }}" value="{{ therapist.education_end_year }}">
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="price" class="form-label">{% trans "Session Price" %}</label>
+                            <input type="number" class="form-control" id="price" name="price" min="1" value="{{ therapist.price }}" required>
+                        </div>
+
+                        <div class="mb-4">
+                            <label for="image" class="form-label">{% trans "Profile Photo" %}</label>
+                            {% if therapist.image %}
+                                <div class="current-photo mb-3">
+                                    <h6>{% trans "Current Photo" %}</h6>
+                                    <div class="profile-photo-container">
+                                        <img src="{{ therapist.image.url }}" 
+                                             alt="{{ therapist.user.get_full_name }}" 
+                                             class="profile-photo img-fluid"
+                                             onerror="handleImageError(this)">
+                                    </div>
+                                </div>
+                            {% endif %}
+                            <input type="file" class="form-control {% if form.image.errors %}is-invalid{% endif %}" 
+                                   id="image" name="image" accept="image/jpeg,image/png" 
+                                   aria-describedby="imageHelp">
+                            <div id="imageHelp" class="form-text">{% trans "Only JPEG and PNG images are allowed. Maximum file size: 5MB." %}</div>
+                            {% if form.image.errors %}
+                                <div class="invalid-feedback">
+                                    {{ form.image.errors|join:", " }}
+                                </div>
+                            {% endif %}
+                            {% if messages %}
+                                {% for message in messages %}
+                                    {% if 'image' in message|lower or 'file' in message|lower %}
+                                        <div class="alert alert-danger mt-2">
+                                            {{ message }}
+                                        </div>
+                                    {% endif %}
+                                {% endfor %}
+                            {% endif %}
+                        </div>
+
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'users:therapist_account' %}" class="btn btn-outline-secondary">
+                                <i class="fas fa-arrow-left me-2"></i>{% trans "Back to Account" %}
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-2"></i>{% trans "Save Changes" %}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.profile-photo-container {
+    width: 200px;
+    height: 200px;
+    margin: 0 auto;
+    overflow: hidden;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.profile-photo {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+}
+
+.current-photo {
+    text-align: center;
+}
+
+.current-photo h6 {
+    margin-bottom: 1rem;
+    color: #666;
+}
+</style>
+
+<script>
+function handleImageError(img) {
+    img.src = "{% static 'img/profile.png' %}";
+}
+</script>
+{% endblock %} 
